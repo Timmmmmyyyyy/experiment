@@ -5,8 +5,8 @@
     --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
     --text-primary: #ffffff;
     --text-secondary: rgba(255, 255, 255, 0.6);
-    --accent: #e74c3c;
-    --accent-hover: #c0392b;
+    --accent: #6b7280;
+    --accent-hover: #9ca3af;
     --secondary-btn: rgba(255, 255, 255, 0.1);
     --secondary-btn-hover: rgba(255, 255, 255, 0.2);
 }
