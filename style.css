@@ -5,8 +5,8 @@
     --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
     --text-primary: #ffffff;
     --text-secondary: rgba(255, 255, 255, 0.6);
-    --accent: #6b7280;
-    --accent-hover: #9ca3af;
+    --accent: #fbbf24;
+    --accent-hover: #f59e0b;
     --secondary-btn: rgba(255, 255, 255, 0.1);
     --secondary-btn-hover: rgba(255, 255, 255, 0.2);
 }
@@ -49,7 +49,7 @@ body {
 .blob-1 {
     width: 400px;
     height: 400px;
-    background: #1e3a8a;
+    background: #f59e0b;
     top: -100px;
     left: -100px;
 }
@@ -57,7 +57,7 @@ body {
 .blob-2 {
     width: 300px;
     height: 300px;
-    background: #1e40af;
+    background: #d97706;
     bottom: -50px;
     right: -50px;
     animation-delay: -5s;
@@ -66,15 +66,20 @@ body {
 .blob-3 {
     width: 250px;
     height: 250px;
-    background: #3b82f6;
+    background: #fbbf24;
     top: 50%;
     left: 40%;
     animation-delay: -10s;
 }
 
 @keyframes move {
-    from { transform: translate(0, 0) scale(1); }
-    to { transform: translate(100px, 50px) scale(1.1); }
+    from {
+        transform: translate(0, 0) scale(1);
+    }
+
+    to {
+        transform: translate(100px, 50px) scale(1.1);
+    }
 }
 
 /* Calculator Container */
@@ -158,7 +163,7 @@ body {
 
 .btn-accent {
     background: var(--accent);
-    color: white;
+    color: #1a1a1a;
     font-weight: 600;
 }
 
@@ -186,6 +191,13 @@ body {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
