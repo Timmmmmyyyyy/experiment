@@ -1,3 +1,23 @@
+// Language config
+const LANGUAGES = {
+    en: {
+        locale: 'en',
+        decimalSep: '.',
+        clear: 'AC',
+        del: 'DEL',
+        htmlLang: 'en',
+    },
+    ru: {
+        locale: 'ru',
+        decimalSep: ',',
+        clear: 'ОЧ',
+        del: 'УД',
+        htmlLang: 'ru',
+    }
+};
+
+let currentLang = 'en';
+
 class Calculator {
     constructor(previousOperandElement, currentOperandElement) {
         this.previousOperandElement = previousOperandElement;
@@ -66,6 +86,7 @@ class Calculator {
     }
 
     getDisplayNumber(number) {
+        const lang = LANGUAGES[currentLang];
         const stringNumber = number.toString();
         const integerDigits = parseFloat(stringNumber.split('.')[0]);
         const decimalDigits = stringNumber.split('.')[1];
@@ -73,10 +94,10 @@ class Calculator {
         if (isNaN(integerDigits)) {
             integerDisplay = '';
         } else {
-            integerDisplay = integerDigits.toLocaleString('en', { maximumFractionDigits: 0 });
+            integerDisplay = integerDigits.toLocaleString(lang.locale, { maximumFractionDigits: 0 });
         }
         if (decimalDigits != null) {
-            return `${integerDisplay}.${decimalDigits}`;
+            return `${integerDisplay}${lang.decimalSep}${decimalDigits}`;
         } else {
             return integerDisplay;
         }
@@ -103,6 +124,11 @@ function appendNumber(number) {
     calculator.updateDisplay();
 }
 
+function appendDecimal() {
+    calculator.appendNumber('.');
+    calculator.updateDisplay();
+}
+
 function appendOperator(operator) {
     calculator.chooseOperation(operator);
     calculator.updateDisplay();
@@ -123,9 +149,30 @@ function deleteLast() {
     calculator.updateDisplay();
 }
 
+function setLanguage(lang) {
+    currentLang = lang;
+    const cfg = LANGUAGES[lang];
+
+    // Update HTML lang attribute
+    document.getElementById('html-root').lang = cfg.htmlLang;
+
+    // Update button labels
+    document.getElementById('btn-clear').textContent = cfg.clear;
+    document.getElementById('btn-del').textContent = cfg.del;
+    document.getElementById('btn-decimal').textContent = cfg.decimalSep;
+
+    // Update lang toggle active state
+    document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+    document.getElementById('btn-ru').classList.toggle('active', lang === 'ru');
+
+    // Refresh display with new locale
+    calculator.updateDisplay();
+}
+
 // Keyboard Support
 document.addEventListener('keydown', e => {
-    if ((e.key >= '0' && e.key <= '9') || e.key === '.') appendNumber(e.key);
+    if ((e.key >= '0' && e.key <= '9')) appendNumber(e.key);
+    if (e.key === '.' || e.key === ',') appendDecimal();
     if (e.key === '+' || e.key === '-' || e.key === '*' || e.key === '/' || e.key === '%') appendOperator(e.key);
     if (e.key === 'Enter' || e.key === '=') calculate();
     if (e.key === 'Backspace') deleteLast();

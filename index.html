@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" id="html-root">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,33 +18,37 @@
 
     <div class="calculator-container animate-in">
         <div class="calculator">
+            <div class="lang-toggle">
+                <button class="lang-btn active" id="btn-en" onclick="setLanguage('en')">EN</button>
+                <button class="lang-btn" id="btn-ru" onclick="setLanguage('ru')">RU</button>
+            </div>
             <div class="display">
                 <div class="previous-operand" id="previous-operand"></div>
                 <div class="current-operand" id="current-operand">0</div>
             </div>
             <div class="buttons">
-                <button class="btn btn-secondary" onclick="clearDisplay()">AC</button>
-                <button class="btn btn-secondary" onclick="deleteLast()">DEL</button>
+                <button class="btn btn-secondary" id="btn-clear" onclick="clearDisplay()">AC</button>
+                <button class="btn btn-secondary" id="btn-del" onclick="deleteLast()">DEL</button>
                 <button class="btn btn-secondary" onclick="appendOperator('%')">%</button>
                 <button class="btn btn-accent" onclick="appendOperator('/')">÷</button>
-                
+
                 <button class="btn" onclick="appendNumber('7')">7</button>
                 <button class="btn" onclick="appendNumber('8')">8</button>
                 <button class="btn" onclick="appendNumber('9')">9</button>
                 <button class="btn btn-accent" onclick="appendOperator('*')">×</button>
-                
+
                 <button class="btn" onclick="appendNumber('4')">4</button>
                 <button class="btn" onclick="appendNumber('5')">5</button>
                 <button class="btn" onclick="appendNumber('6')">6</button>
                 <button class="btn btn-accent" onclick="appendOperator('-')">-</button>
-                
+
                 <button class="btn" onclick="appendNumber('1')">1</button>
                 <button class="btn" onclick="appendNumber('2')">2</button>
                 <button class="btn" onclick="appendNumber('3')">3</button>
                 <button class="btn btn-accent" onclick="appendOperator('+')">+</button>
-                
+
                 <button class="btn btn-double" onclick="appendNumber('0')">0</button>
-                <button class="btn" onclick="appendNumber('.')">.</button>
+                <button class="btn" id="btn-decimal" onclick="appendDecimal()">.</button>
                 <button class="btn btn-accent" onclick="calculate()">=</button>
             </div>
         </div>
