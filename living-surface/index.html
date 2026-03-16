@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Living Surface</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #07080f; overflow: hidden; cursor: none; }
+        canvas { display: block; }
+
+        #cursor {
+            position: fixed;
+            width: 12px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            mix-blend-mode: screen;
+            transition: transform 0.1s ease;
+            box-shadow: 0 0 12px 4px rgba(130, 200, 255, 0.6);
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="cursor"></div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const cursor = document.getElementById('cursor');
+
+        let W = canvas.width = window.innerWidth;
+        let H = canvas.height = window.innerHeight;
+
+        // Grid density
+        const COLS = 42;
+        const ROWS = 28;
+
+        // Physics params
+        const STIFFNESS  = 0.055;
+        const DAMPING    = 0.82;
+        const MOUSE_R    = 180;
+        const MOUSE_F    = 11;
+        const DRAG_F     = 5;
+
+        let mouse   = { x: W / 2, y: H / 2, vx: 0, vy: 0, px: W / 2, py: H / 2 };
+        let points  = [];
+        let time    = 0;
+
+        /* ─── Init grid ─────────────────────────────────────────── */
+        function init() {
+            points = [];
+            const sx = W / (COLS - 1);
+            const sy = H / (ROWS - 1);
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    points.push({
+                        x:  c * sx, y:  r * sy,
+                        ox: c * sx, oy: r * sy,
+                        vx: 0,      vy: 0,
+                    });
+                }
+            }
+        }
+
+        /* ─── Physics update ────────────────────────────────────── */
+        function update() {
+            time += 0.008;
+
+            // Mouse velocity
+            mouse.vx = mouse.x - mouse.px;
+            mouse.vy = mouse.y - mouse.py;
+            mouse.px = mouse.x;
+            mouse.py = mouse.y;
+            const mSpeed = Math.sqrt(mouse.vx * mouse.vx + mouse.vy * mouse.vy);
+
+            for (const p of points) {
+                // Gentle ambient breathing on edges
+                const breathing = Math.sin(time + p.ox * 0.005) * 1.2;
+
+                // Spring toward origin + breathing
+                p.vx += (p.ox - p.x) * STIFFNESS + (p.oy + breathing - p.y) * STIFFNESS * 0.3;
+                p.vy += (p.oy + breathing - p.y) * STIFFNESS;
+
+                // Mouse influence
+                const dx = p.x - mouse.x;
+                const dy = p.y - mouse.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < MOUSE_R && dist > 0) {
+                    const ratio = 1 - dist / MOUSE_R;
+                    const smooth = ratio * ratio * (3 - 2 * ratio); // smoothstep
+
+                    // Radial push from cursor position
+                    p.vx += (dx / dist) * smooth * MOUSE_F;
+                    p.vy += (dy / dist) * smooth * MOUSE_F;
+
+                    // Drag — points dragged in direction of mouse movement
+                    p.vx += mouse.vx * smooth * DRAG_F * 0.15;
+                    p.vy += mouse.vy * smooth * DRAG_F * 0.15;
+                }
+
+                p.vx *= DAMPING;
+                p.vy *= DAMPING;
+                p.x  += p.vx;
+                p.y  += p.vy;
+            }
+        }
+
+        /* ─── Rendering ─────────────────────────────────────────── */
+        function displacement(p) {
+            const dx = p.x - p.ox;
+            const dy = p.y - p.oy;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function lineColor(d, alpha) {
+            // map displacement → hue: calm=220°(blue), excited=190°(cyan)→160°(green)
+            const t = Math.min(d / 40, 1);
+            const h = 220 - t * 60;
+            const s = 60 + t * 40;
+            const l = 45 + t * 25;
+            return `hsla(${h},${s}%,${l}%,${alpha})`;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+
+            // ── Draw horizontal rows as smooth bezier chains ──────
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS - 1; c++) {
+                    const p0 = points[r * COLS + c];
+                    const p1 = points[r * COLS + c + 1];
+                    const d  = (displacement(p0) + displacement(p1)) / 2;
+                    const alpha = 0.18 + Math.min(d / 50, 1) * 0.55;
+                    const w     = 0.6 + Math.min(d / 30, 1) * 1.2;
+
+                    ctx.beginPath();
+                    ctx.moveTo(p0.x, p0.y);
+                    // midpoint for smoothing
+                    const mx = (p0.x + p1.x) / 2;
+                    const my = (p0.y + p1.y) / 2;
+                    ctx.quadraticCurveTo(p0.x, p0.y, mx, my);
+                    ctx.quadraticCurveTo(p1.x, p1.y, p1.x, p1.y);
+                    ctx.strokeStyle = lineColor(d, alpha);
+                    ctx.lineWidth   = w;
+                    ctx.stroke();
+                }
+            }
+
+            // ── Draw vertical columns ──────────────────────────────
+            for (let c = 0; c < COLS; c++) {
+                for (let r = 0; r < ROWS - 1; r++) {
+                    const p0 = points[r       * COLS + c];
+                    const p1 = points[(r + 1) * COLS + c];
+                    const d  = (displacement(p0) + displacement(p1)) / 2;
+                    const alpha = 0.18 + Math.min(d / 50, 1) * 0.55;
+                    const w     = 0.6 + Math.min(d / 30, 1) * 1.2;
+
+                    ctx.beginPath();
+                    ctx.moveTo(p0.x, p0.y);
+                    const mx = (p0.x + p1.x) / 2;
+                    const my = (p0.y + p1.y) / 2;
+                    ctx.quadraticCurveTo(p0.x, p0.y, mx, my);
+                    ctx.quadraticCurveTo(p1.x, p1.y, p1.x, p1.y);
+                    ctx.strokeStyle = lineColor(d, alpha);
+                    ctx.lineWidth   = w;
+                    ctx.stroke();
+                }
+            }
+
+            // ── Intersection dots ─────────────────────────────────
+            for (const p of points) {
+                const d = displacement(p);
+                if (d < 1.5) continue;
+                const t = Math.min(d / 35, 1);
+                const r = 1.2 + t * 2.5;
+                const alpha = 0.3 + t * 0.7;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+                ctx.fillStyle = `hsla(${190 - t * 40}, 90%, 75%, ${alpha})`;
+                ctx.fill();
+            }
+
+            // ── Glow around cursor ────────────────────────────────
+            const grd = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, MOUSE_R);
+            grd.addColorStop(0,   'rgba(140, 210, 255, 0.07)');
+            grd.addColorStop(0.5, 'rgba(80,  160, 255, 0.03)');
+            grd.addColorStop(1,   'rgba(0,   0,   0,   0)');
+            ctx.fillStyle = grd;
+            ctx.fillRect(0, 0, W, H);
+        }
+
+        /* ─── Loop ───────────────────────────────────────────────── */
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        /* ─── Events ─────────────────────────────────────────────── */
+        window.addEventListener('mousemove', e => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top  = e.clientY + 'px';
+        });
+
+        // Touch support
+        window.addEventListener('touchmove', e => {
+            e.preventDefault();
+            const t = e.touches[0];
+            mouse.x = t.clientX;
+            mouse.y = t.clientY;
+        }, { passive: false });
+
+        window.addEventListener('resize', () => {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+            init();
+        });
+
+        init();
+        loop();
+    </script>
+</body>
+</html>
